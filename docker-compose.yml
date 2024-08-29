@@ -1,5 +1,5 @@
 networks:
-  my-bridge-network:
+  kafka-bridge-network:
     driver: bridge
 services:
   broker:
@@ -8,6 +8,7 @@ services:
     container_name: broker
     ports:
       - 9092:9092
+      - 9997:9997
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
@@ -24,19 +25,43 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_JMX_PORT: 9997
+      KAFKA_JMX_OPTS: -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=kafka0 -Dcom.sun.management.jmxremote.rmi.port=9997
     networks:
-      - "my-bridge-network"
+      - "kafka-bridge-network"
   schema_registry:
     image: confluentinc/cp-schema-registry:latest
-    hostname: schema_registry
-    container_name: schema_registry
+    hostname: schemaregistry
+    container_name: schemaregistry
     ports:
-      - 8085:8085
+      - ${SCHEMA_REGISTRY_PORT}:${SCHEMA_REGISTRY_PORT}
     environment:
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://broker:29092
-      SCHEMA_REGISTRY_HOST_NAME: schema_registry
-      SCHEMA_REGISTRY_LISTENERS: "http://0.0.0.0:8085"
+      SCHEMA_REGISTRY_HOST_NAME: schemaregistry
+      SCHEMA_REGISTRY_LISTENERS: http://schemaregistry:${SCHEMA_REGISTRY_PORT}
+      SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: PLAINTEXT
+
+      SCHEMA_REGISTRY_SCHEMA_REGISTRY_INTER_INSTANCE_PROTOCOL: "http"
+      SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL: INFO
+      SCHEMA_REGISTRY_KAFKASTORE_TOPIC: _schemas
     networks:
-      - "my-bridge-network"
+      - "kafka-bridge-network"
     depends_on:
       - "broker"
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    hostname: kafka_ui
+    container_name: kafka_ui
+    ports:
+      - ${KAFKA_UI_PORT}:${KAFKA_UI_PORT}
+    depends_on:
+      - schema_registry
+      - broker
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: broker:29092
+      KAFKA_CLUSTERS_0_METRICS_PORT: 9997
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schemaregistry:${SCHEMA_REGISTRY_PORT}
+      DYNAMIC_CONFIG_ENABLED: 'true'
+    networks:
+      - "kafka-bridge-network"

@@ -29,7 +29,7 @@ services:
       KAFKA_JMX_OPTS: -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=kafka0 -Dcom.sun.management.jmxremote.rmi.port=9997
     networks:
       - "kafka-bridge-network"
-  schema_registry:
+  schema-registry:
     image: confluentinc/cp-schema-registry:latest
     hostname: schemaregistry
     container_name: schemaregistry
@@ -47,7 +47,7 @@ services:
     networks:
       - "kafka-bridge-network"
     depends_on:
-      - "broker"
+      - broker
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     hostname: kafka_ui
@@ -55,8 +55,9 @@ services:
     ports:
       - ${KAFKA_UI_PORT}:${KAFKA_UI_PORT}
     depends_on:
-      - schema_registry
+      - schema-registry
       - broker
+      - kafka-connect
     environment:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: broker:29092
@@ -65,3 +66,44 @@ services:
       DYNAMIC_CONFIG_ENABLED: 'true'
     networks:
       - "kafka-bridge-network"
+  sql-server:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    hostname: sql1
+    container_name: sql1
+    ports:
+      - 1433:1433
+    networks:
+      - kafka-bridge-network
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=alphab3t@
+      - SA_PASSWORD=alphab3t@
+  kafka-connect:
+    image: confluentinc/cp-kafka-connect:latest
+    hostname: kafka_connect
+    container_name: kafka_connect
+    ports:
+      - 8083:8083
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: broker:29092
+      CONNECT_GROUP_ID: compose-connect-group
+      CONNECT_CONFIG_STORAGE_TOPIC: _connect_configs
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_STORAGE_TOPIC: _connect_offset
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_TOPIC: _connect_status
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schemaregistry:8085
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schemaregistry:8085
+      CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
+      CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
+    networks:
+      - kafka-bridge-network
+    depends_on:
+      - sql-server
+      - broker
+      - schema-registry

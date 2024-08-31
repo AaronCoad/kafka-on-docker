@@ -1,6 +1,8 @@
 networks:
   kafka-bridge-network:
     driver: bridge
+  sql-bridge-network:
+    driver: bridge
 services:
   broker:
     image: apache/kafka:latest
@@ -67,13 +69,15 @@ services:
     networks:
       - "kafka-bridge-network"
   sql-server:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    # image: mcr.microsoft.com/mssql/server:2022-latest
     hostname: sql1
     container_name: sql1
+    build:
+      dockerfile: Sql
     ports:
       - 1433:1433
     networks:
-      - kafka-bridge-network
+      - sql-bridge-network
     environment:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=alphab3t@
@@ -103,6 +107,7 @@ services:
       CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
     networks:
       - kafka-bridge-network
+      - sql-bridge-network
     depends_on:
       - sql-server
       - broker

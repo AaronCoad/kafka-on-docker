@@ -1,0 +1,19 @@
+FROM mcr.microsoft.com/mssql/server:2022-latest
+USER root 
+
+# create the app directory
+RUN mkdir -p /usr/src/app
+
+# set mssql as owner of the app directory
+RUN chown mssql /usr/src/app
+
+WORKDIR /usr/src/app
+
+COPY ./SqlStartup/* /usr/src/app
+
+RUN chmod +x /usr/src/app/run-initialization.sh
+
+# change back to user mssql
+USER mssql
+
+CMD /bin/bash entrypoint.sh

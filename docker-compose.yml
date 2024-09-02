@@ -82,9 +82,11 @@ services:
       - MSSQL_SA_PASSWORD=alphab3t@
       - SA_PASSWORD=alphab3t@
   kafka-connect:
-    image: confluentinc/cp-kafka-connect:latest
+    # image: confluentinc/cp-kafka-connect:latest
     hostname: kafka_connect
     container_name: kafka_connect
+    build:
+      dockerfile: ./DockerFiles/KafkaConnect
     ports:
       - 8083:8083
     environment:

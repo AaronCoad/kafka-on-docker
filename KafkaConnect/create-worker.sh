@@ -14,4 +14,4 @@ echo "Installing Kafka Confluent Connector"
 curl --location --request POST http://localhost:8083/connectors/  \
     --header 'Content-Type: application/json' --header 'Accept: application/json' \
     --data-raw '{"name": "mssql-jdbc-product-00","config": {"connector.class": "io.confluent.connect.jdbc.JdbcSourceConnector","connection.url": "jdbc:sqlserver://;servername=sql1;encrypt=false;databaseName=DemoData;","connection.user" : "sa","connection.password": "alphab3t@","numeric.mapping" : "best_fit","tasks.max": "1","mode": "timestamp+incrementing","timestamp.column.name": "LastModified","incrementing.column.name": "Id", "catalog.pattern":"DemoData", "schema.pattern":"dbo","table.whitelist": "Product","table.types": "TABLE","timestamp.initial": "-1","topics": "product", "topic.prefix":"demo.","db.timezone": "UTC","validate.non.null": "false","poll.interval.ms": "1000", "batch.max.rows": "3000", "table.poll.interval.ms": "6000","topic.creation.default.replication.factor":"1","topic.creation.default.partitions":"1"}}'
-    
+sleep infinity

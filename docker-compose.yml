@@ -69,11 +69,10 @@ services:
     networks:
       - "kafka-bridge-network"
   sql-server:
-    # image: mcr.microsoft.com/mssql/server:2022-latest
     hostname: sql1
     container_name: sql1
     build:
-      dockerfile: Sql
+      dockerfile: ./DockerFiles/Sql
     ports:
       - 1433:1433
     networks:

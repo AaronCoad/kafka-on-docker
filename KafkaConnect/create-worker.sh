@@ -30,7 +30,6 @@ curl --location --request POST http://localhost:8083/connectors/  \
     "schema.pattern":"dbo",
     "table.whitelist": "Product",
     "table.types": "TABLE",
-    "timestamp.initial": "-1",
     "topics": "product",
     "topic.prefix":"demo.",
     "validate.non.null": "false",
@@ -38,7 +37,8 @@ curl --location --request POST http://localhost:8083/connectors/  \
     "batch.max.rows": "3000",
     "table.poll.interval.ms": "6000",
     "topic.creation.default.replication.factor":"1",
-    "topic.creation.default.partitions":"1"
+    "topic.creation.default.partitions":"1",
+    "group.id":"product-connector"
     }
 }
 EOF

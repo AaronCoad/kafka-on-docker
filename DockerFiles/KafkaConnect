@@ -8,6 +8,6 @@ WORKDIR /usr/src/app
 
 COPY ./KafkaConnect/* /usr/src/app
 
-RUN chmod +x /usr/src/app/create-worker.sh
+RUN chmod +x /usr/src/app/install-connector.sh
 
-CMD /bin/bash create-worker.sh
+CMD /bin/bash install-connector.sh

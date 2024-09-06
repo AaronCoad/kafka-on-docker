@@ -1,0 +1,14 @@
+FROM ubuntu:jammy
+USER root 
+RUN apt-get update && apt-get install -y \
+curl
+# create the app directory
+RUN mkdir -p /usr/src/app
+
+WORKDIR /usr/src/app
+
+COPY ./Executor/* /usr/src/app
+
+RUN chmod +x /usr/src/app/create-kafka-worker.sh
+
+CMD /bin/bash create-kafka-worker.sh

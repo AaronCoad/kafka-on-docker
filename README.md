@@ -6,7 +6,9 @@ This repository is for educational purposes only and contains the process for co
 ## Deployment
 This package can be deployed in a Docker Desktop environment by using docker-compose up -d \
 To avoid an attempt to create the database before SQL Server is initialised the [SqlStartup/run-initialization.sh](./SqlStartup/run-initialization.sh) script may need the initial sleep adjusted. \
-[SqlStartup/create-database.sql](./SqlStartup/create-database.sql) can be modified to your needs.
+[SqlStartup/create-database.sql](./SqlStartup/create-database.sql) can be modified to your needs. \
+\
+KafkaConnect installs the relevant JDBC connector while Executor sends the request to create the workers.
 
 ## Components
 - Containers

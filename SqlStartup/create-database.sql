@@ -13,5 +13,18 @@ BEGIN
 END
 GO
 
-INSERT INTO Product(ProductName)
-VALUES('Apples'), ('Bananas'), ('Oranges');
+IF OBJECT_ID(N'People','U') IS NULL
+BEGIN
+    CREATE TABLE People(
+        PersonId INT IDENTITY(1,1) PRIMARY KEY,
+        GivenNames NVARCHAR(100) NOT NULL,
+        Surname NVARCHAR(100) NOT NULL,
+        AddressLine1 NVARCHAR(100) NOT NULL,
+        AddressLine2 NVARCHAR(100) NOT NULL,
+        City NVARCHAR(100) NOT NULL,
+        State NVARCHAR(100) NOT NULL,
+        PostCode VARCHAR(10) NOT NULL,
+        LastModified DATETIME2 NOT NULL DEFAULT(GetDate())
+    )
+END
+GO

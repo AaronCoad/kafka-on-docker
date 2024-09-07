@@ -116,6 +116,10 @@ services:
       dockerfile: ./DockerFiles/Executor
       args:
         - KAFKA_CONNECT_ENDPOINT=$KAFKA_CONNECT_HOSTNAME:$KAFKA_CONNECT_PORT
+        - SQL_USERNAME=$SQL_USERNAME
+        - SQL_PASSWORD=$SQL_PASSWORD
+        - SQL_SERVER=$SQL_SERVER
+        - DATABASE=$DATABASE
     networks:
       - kafka-bridge-network
     depends_on:

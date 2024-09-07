@@ -1,4 +1,10 @@
 FROM ubuntu:jammy
+ARG KAFKA_CONNECT_ENDPOINT=kafkaconnect:8083
+ARG SQL_USERNAME=sa
+ARG SQL_PASSWORD=alphab3t@
+ARG SQL_SERVER=sql1
+ARG DATABASE=DemoData
+
 USER root 
 RUN apt-get update && apt-get install -y \
 curl
@@ -10,5 +16,8 @@ WORKDIR /usr/src/app
 COPY ./Executor/* /usr/src/app
 
 RUN chmod +x /usr/src/app/create-kafka-worker.sh
-
-CMD /bin/bash create-kafka-worker.sh
+ENV KAFKA_CONNECT_ENDPOINT=${KAFKA_CONNECT_ENDPOINT}
+ENV SQL_USERNAME=${SQL_USERNAME}
+ENV SQL_PASSWORD=${SQL_PASSWORD}
+ENV DATABASE=${DATABASE}
+ENTRYPOINT [ "/usr/src/app/create-kafka-worker.sh" ]

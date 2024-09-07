@@ -6,50 +6,49 @@ networks:
 services:
   broker:
     image: apache/kafka:latest
-    hostname: broker
-    container_name: broker
+    hostname: $KAFKA_BROKER_HOSTNAME
+    container_name: $KAFKA_BROKER_HOSTNAME
     ports:
-      - 9092:9092
-      - 9997:9997
+      - $KAFKA_BROKER_EXTERNAL_PORT:$KAFKA_BROKER_EXTERNAL_PORT
+      - $KAFKA_BROKER_JMX_PORT:$KAFKA_BROKER_JMX_PORT
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://$KAFKA_BROKER_HOSTNAME:$KAFKA_BROKER_INTERNAL_PORT,PLAINTEXT_HOST://localhost:$KAFKA_BROKER_EXTERNAL_PORT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_PROCESS_ROLES: $KAFKA_BROKER_HOSTNAME,controller
       KAFKA_NODE_ID: 1
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:29093
-      KAFKA_LISTENERS: PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@$KAFKA_BROKER_HOSTNAME:29093
+      KAFKA_LISTENERS: PLAINTEXT://$KAFKA_BROKER_HOSTNAME:$KAFKA_BROKER_INTERNAL_PORT,CONTROLLER://$KAFKA_BROKER_HOSTNAME:29093,PLAINTEXT_HOST://0.0.0.0:$KAFKA_BROKER_EXTERNAL_PORT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
-      KAFKA_JMX_PORT: 9997
-      KAFKA_JMX_OPTS: -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=kafka0 -Dcom.sun.management.jmxremote.rmi.port=9997
+      KAFKA_JMX_PORT: $KAFKA_BROKER_JMX_PORT
+      KAFKA_JMX_OPTS: -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=kafka0 -Dcom.sun.management.jmxremote.rmi.port=$KAFKA_BROKER_JMX_PORT
     networks:
       - "kafka-bridge-network"
   schema-registry:
     image: confluentinc/cp-schema-registry:latest
-    hostname: schemaregistry
-    container_name: schemaregistry
+    hostname: $KAFKA_SCHEMA_HOSTNAME
+    container_name: $KAFKA_SCHEMA_HOSTNAME
     ports:
-      - ${SCHEMA_REGISTRY_PORT}:${SCHEMA_REGISTRY_PORT}
+      - ${KAFKA_SCHEMA_PORT}:${KAFKA_SCHEMA_PORT}
     environment:
-      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://broker:29092
-      SCHEMA_REGISTRY_HOST_NAME: schemaregistry
-      SCHEMA_REGISTRY_LISTENERS: http://schemaregistry:${SCHEMA_REGISTRY_PORT}
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://$KAFKA_BROKER_HOSTNAME:$KAFKA_BROKER_INTERNAL_PORT
+      SCHEMA_REGISTRY_HOST_NAME: $KAFKA_SCHEMA_HOSTNAME
+      SCHEMA_REGISTRY_LISTENERS: http://$KAFKA_SCHEMA_HOSTNAME:${KAFKA_SCHEMA_PORT}
       SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: PLAINTEXT
-
       SCHEMA_REGISTRY_SCHEMA_REGISTRY_INTER_INSTANCE_PROTOCOL: "http"
       SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL: INFO
       SCHEMA_REGISTRY_KAFKASTORE_TOPIC: _schemas
     networks:
       - "kafka-bridge-network"
     depends_on:
-      - broker
+      - $KAFKA_BROKER_HOSTNAME
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     hostname: kafka_ui
@@ -62,35 +61,35 @@ services:
       - kafka-connect
     environment:
       KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: broker:29092
-      KAFKA_CLUSTERS_0_METRICS_PORT: 9997
-      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schemaregistry:${SCHEMA_REGISTRY_PORT}
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: $KAFKA_BROKER_HOSTNAME:$KAFKA_BROKER_INTERNAL_PORT
+      KAFKA_CLUSTERS_0_METRICS_PORT: $KAFKA_BROKER_JMX_PORT
+      KAFKA_CLUSTERS_0_$KAFKA_SCHEMA_HOSTNAME: http://$KAFKA_SCHEMA_HOSTNAME:${KAFKA_SCHEMA_PORT}
       DYNAMIC_CONFIG_ENABLED: 'true'
     networks:
       - "kafka-bridge-network"
   sql-server:
-    hostname: sql1
-    container_name: sql1
+    hostname: $SQL_SERVER
+    container_name: $SQL_SERVER
     build:
       dockerfile: ./DockerFiles/Sql
     ports:
-      - 1433:1433
+      - $SQL_PORT:$SQL_PORT
     networks:
       - sql-bridge-network
     environment:
       - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=alphab3t@
-      - SA_PASSWORD=alphab3t@
+      - MSSQL_SA_PASSWORD=$SQL_PASSWORD
+      - SA_PASSWORD=$SQL_PASSWORD
   kafka-connect:
     # image: confluentinc/cp-kafka-connect:latest
-    hostname: kafkaconnect
-    container_name: kafkaconnect
+    hostname: $KAFKA_CONNECT_HOSTNAME
+    container_name: $KAFKA_CONNECT_HOSTNAME
     build:
       dockerfile: ./DockerFiles/KafkaConnect
     ports:
-      - 8083:8083
+      - $KAFKA_CONNECT_PORT:$KAFKA_CONNECT_PORT
     environment:
-      CONNECT_BOOTSTRAP_SERVERS: broker:29092
+      CONNECT_BOOTSTRAP_SERVERS: $KAFKA_BROKER_HOSTNAME:$KAFKA_BROKER_INTERNAL_PORT
       CONNECT_GROUP_ID: compose-connect-group
       CONNECT_CONFIG_STORAGE_TOPIC: _connect_configs
       CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
@@ -99,10 +98,10 @@ services:
       CONNECT_STATUS_STORAGE_TOPIC: _connect_status
       CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
       CONNECT_KEY_CONVERTER: io.confluent.connect.json.JsonSchemaConverter
-      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schemaregistry:8085
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://$KAFKA_SCHEMA_HOSTNAME:$KAFKA_SCHEMA_PORT
       CONNECT_VALUE_CONVERTER: io.confluent.connect.json.JsonSchemaConverter
-      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schemaregistry:8085
-      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://$KAFKA_SCHEMA_HOSTNAME:$KAFKA_SCHEMA_PORT
+      CONNECT_REST_ADVERTISED_HOST_NAME: $KAFKA_CONNECT_HOSTNAME
       CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
     networks:
       - kafka-bridge-network
@@ -115,6 +114,8 @@ services:
     container_name: connector-creator
     build:
       dockerfile: ./DockerFiles/Executor
+      args:
+        - KAFKA_CONNECT_ENDPOINT=$KAFKA_CONNECT_HOSTNAME:$KAFKA_CONNECT_PORT
     networks:
       - kafka-bridge-network
     depends_on:
